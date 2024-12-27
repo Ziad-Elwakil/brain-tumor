@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 # Define constants and configurations
 IMAGE_SIZE = 225  # Resize all images to 225x225
 BATCH_SIZE = 64
-EPOCHS = 5
+EPOCHS = 6
 LABELS = {"Normal": 0, "Tumor": 1}
 
 # Paths to datasets
@@ -110,9 +110,11 @@ def train_model():
         callbacks=callbacks
     )
 
-    # Save the model
+    # Save the model and training history
     model.save("tumor_detection_new1.keras")
+    np.save("training_history.npy", history.history)  # Save history to file
     return model, history
+
 
 
 # Load the model (if it exists, else train a new model)
@@ -217,33 +219,36 @@ def run():
         st.title("Visualizations")
         st.write("Here you can view important visualizations related to model training.")
 
-        # Example visualization: Accuracy and Loss Graphs
-        st.write("### Example Visualization: Model Performance")
-        epochs = list(range(1, EPOCHS + 1))
-        train_acc = [0.7 + 0.03 * i for i in range(EPOCHS)]  # Dummy data for demonstration
-        val_acc = [0.65 + 0.025 * i for i in range(EPOCHS)]  # Dummy data for demonstration
+        # Load training history if exists
+        if os.path.exists("training_history.npy"):
+            history = np.load("training_history.npy", allow_pickle=True).item()
+            train_acc = history['accuracy']
+            val_acc = history['val_accuracy']
+            train_loss = history['loss']
+            val_loss = history['val_loss']
+            epochs = range(1, EPOCHS + 1)
 
-        plt.figure(figsize=(10, 5))
-        plt.plot(epochs, train_acc, label='Training Accuracy')
-        plt.plot(epochs, val_acc, label='Validation Accuracy')
-        plt.xlabel('Epochs')
-        plt.ylabel('Accuracy')
-        plt.title('Model Accuracy Over Epochs')
-        plt.legend()
-        st.pyplot(plt)
+            # Accuracy Plot
+            plt.figure(figsize=(10, 5))
+            plt.plot(epochs, train_acc, label='Training Accuracy')
+            plt.plot(epochs, val_acc, label='Validation Accuracy')
+            plt.xlabel('Epochs')
+            plt.ylabel('Accuracy')
+            plt.title('Model Accuracy Over Epochs')
+            plt.legend()
+            st.pyplot(plt)
 
-        st.write("### Example Visualization: Loss Curve")
-        train_loss = [0.8 - 0.05 * i for i in range(EPOCHS)]  # Dummy data for demonstration
-        val_loss = [0.85 - 0.04 * i for i in range(EPOCHS)]  # Dummy data for demonstration
-
-        plt.figure(figsize=(10, 5))
-        plt.plot(epochs, train_loss, label='Training Loss')
-        plt.plot(val_loss, label='Validation Loss')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.title('Model Loss Over Epochs')
-        plt.legend()
-        st.pyplot(plt)
+            # Loss Plot
+            plt.figure(figsize=(10, 5))
+            plt.plot(epochs, train_loss, label='Training Loss')
+            plt.plot(epochs, val_loss, label='Validation Loss')
+            plt.xlabel('Epochs')
+            plt.ylabel('Loss')
+            plt.title('Model Loss Over Epochs')
+            plt.legend()
+            st.pyplot(plt)
+        else:
+            st.write("No training history available. Train the model to see visualizations.")
     elif page == "code":
         username = "project"
         password = "19111"
